@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Library Manager - Control Panel</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 20px 30px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .header p {
+      margin: 6px 0 0;
+      color: #6b7280;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .login-card {
+      max-width: 420px;
+      margin: 80px auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .login-card h2 {
+      margin-top: 0;
+    }
+
+    .login-card p {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 7px;
+      font-size: 15px;
+      margin: 10px 0 15px;
+    }
+
+    .login-button {
+      width: 100%;
+      background: #111827;
+      color: #ffffff;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 7px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .refresh {
+      background: #111827;
+      color: white;
+    }
+
+    .logout {
+      background: #6b7280;
+      color: white;
+    }
+
+    .activate {
+      background: #16a34a;
+      color: white;
+    }
+
+    .suspend {
+      background: #dc2626;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 15px 20px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #f9fafb;
+      font-size: 13px;
+      color: #6b7280;
+      text-transform: uppercase;
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+
+    .status.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status.active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status.suspended {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .message {
+      padding: 15px 20px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .message.error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .message.success {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 50px 20px;
+      color: #6b7280;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        margin-top: 15px;
+      }
+
+      .card-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      th,
+      td {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+    <h1>Library Manager</h1>
+    <p>License Control Panel</p>
+  </header>
+
+  <!-- LOGIN -->
+
+  <main
+    id="loginView"
+    class="login-card"
+  >
+
+    <h2>Admin Login</h2>
+
+    <p>
+      Enter the administrator password to access
+      customer licenses.
+    </p>
+
+    <input
+      id="passwordInput"
+      type="password"
+      placeholder="Admin password"
+      autocomplete="current-password"
+    />
+
+    <button
+      class="login-button"
+      onclick="login()"
+    >
+      Login
+    </button>
+
+    <div
+      id="loginMessage"
+      class="message"
+    ></div>
+
+  </main>
+
+  <!-- CONTROL PANEL -->
+
+  <main
+    id="panelView"
+    class="container hidden"
+  >
+
+    <div class="card">
+
+      <div class="card-header">
+
+        <h2>Customer Licenses</h2>
+
+        <div class="actions">
+
+          <button
+            class="refresh"
+            onclick="loadLicenses()"
+          >
+            Refresh
+          </button>
+
+          <button
+            class="logout"
+            onclick="logout()"
+          >
+            Logout
+          </button>
+
+        </div>
+
+      </div>
+
+      <div
+        id="message"
+        class="message"
+      ></div>
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
+            <tr>
+              <th>Email</th>
+              <th>College</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="licensesTable"></tbody>
+
+        </table>
+
+      </div>
+
+      <div
+        id="empty"
+        class="empty"
+        style="display: none;"
+      >
+        No customer requests yet.
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const ADMIN_PASSWORD_KEY =
+      'library_manager_admin_password';
+
+    function getAdminPassword() {
+      return sessionStorage.getItem(
+        ADMIN_PASSWORD_KEY
+      );
+    }
+
+    async function login() {
+
+      const password =
+        document
+          .getElementById('passwordInput')
+          .value;
+
+      if (!password) {
+        showLoginMessage(
+          'Please enter the admin password.',
+          'error'
+        );
+
+        return;
+      }
+
+      try {
+
+        const response = await fetch(
+          '/api/admin/licenses',
+          {
+            headers: {
+              'x-admin-password': password
+            }
+          }
+        );
+
+        const data =
+          await response.json();
+
+        if (!response.ok || !data.success) {
+
+          throw new Error(
+            data.message ||
+            'Invalid admin password.'
+          );
+        }
+
+        sessionStorage.setItem(
+          ADMIN_PASSWORD_KEY,
+          password
+        );
+
+        showPanel();
+
+        renderLicenses(data.licenses);
+
+      } catch (error) {
+
+        showLoginMessage(
+          error.message,
+          'error'
+        );
+      }
+    }
+
+    async function loadLicenses() {
+
+      const password =
+        getAdminPassword();
+
+      if (!password) {
+        showLogin();
+        return;
+      }
+
+      hideMessage();
+
+      try {
+
+        const response = await fetch(
+          '/api/admin/licenses',
+          {
+            headers: {
+              'x-admin-password': password
+            }
+          }
+        );
+
+        const data =
+          await response.json();
+
+        if (response.status === 401 ||
+            response.status === 403) {
+
+          logout();
+
+          showLoginMessage(
+            'Your admin session is no longer valid.',
+            'error'
+          );
+
+          return;
+        }
+
+        if (!response.ok || !data.success) {
+
+          throw new Error(
+            data.message ||
+            'Failed to load licenses.'
+          );
+        }
+
+        renderLicenses(data.licenses);
+
+      } catch (error) {
+
+        showMessage(
+          error.message,
+          'error'
+        );
+      }
+    }
+
+    function renderLicenses(licenses) {
+
+      const table =
+        document.getElementById(
+          'licensesTable'
+        );
+
+      const empty =
+        document.getElementById(
+          'empty'
+        );
+
+      table.innerHTML = '';
+
+      if (!licenses || licenses.length === 0) {
+
+        empty.style.display = 'block';
+
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      licenses.forEach((license) => {
+
+        const row =
+          document.createElement('tr');
+
+        row.innerHTML = `
+
+          <td>
+            ${escapeHtml(license.email)}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              license.college_name || '-'
+            )}
+          </td>
+
+          <td>
+
+            <span
+              class="status ${escapeHtml(
+                license.status
+              )}"
+            >
+              ${escapeHtml(
+                license.status
+              )}
+            </span>
+
+          </td>
+
+          <td>
+
+            <div class="actions">
+
+              <button
+                class="activate"
+                onclick="changeStatus(
+                  ${license.id},
+                  'activate'
+                )"
+                ${license.status === 'active'
+                  ? 'disabled'
+                  : ''}
+              >
+                Activate
+              </button>
+
+              <button
+                class="suspend"
+                onclick="changeStatus(
+                  ${license.id},
+                  'suspend'
+                )"
+                ${license.status === 'suspended'
+                  ? 'disabled'
+                  : ''}
+              >
+                Suspend
+              </button>
+
+            </div>
+
+          </td>
+        `;
+
+        table.appendChild(row);
+      });
+    }
+
+    async function changeStatus(
+      id,
+      action
+    ) {
+
+      const password =
+        getAdminPassword();
+
+      if (!password) {
+        logout();
+        return;
+      }
+
+      const actionName =
+        action === 'activate'
+          ? 'activate'
+          : 'suspend';
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to ${actionName} this license?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      hideMessage();
+
+      try {
+
+        const response = await fetch(
+          `/api/admin/licenses/${id}/${action}`,
+          {
+            method: 'POST',
+            headers: {
+              'x-admin-password': password
+            }
+          }
+        );
+
+        const data =
+          await response.json();
+
+        if (response.status === 401 ||
+            response.status === 403) {
+
+          logout();
+
+          showLoginMessage(
+            'Your admin session is no longer valid.',
+            'error'
+          );
+
+          return;
+        }
+
+        if (!response.ok || !data.success) {
+
+          throw new Error(
+            data.message ||
+            'Failed to update license.'
+          );
+        }
+
+        showMessage(
+          data.message,
+          'success'
+        );
+
+        await loadLicenses();
+
+      } catch (error) {
+
+        showMessage(
+          error.message,
+          'error'
+        );
+      }
+    }
+
+    function showPanel() {
+
+      document
+        .getElementById('loginView')
+        .classList.add('hidden');
+
+      document
+        .getElementById('panelView')
+        .classList.remove('hidden');
+    }
+
+    function showLogin() {
+
+      document
+        .getElementById('panelView')
+        .classList.add('hidden');
+
+      document
+        .getElementById('loginView')
+        .classList.remove('hidden');
+    }
+
+    function logout() {
+
+      sessionStorage.removeItem(
+        ADMIN_PASSWORD_KEY
+      );
+
+      showLogin();
+
+      document
+        .getElementById('passwordInput')
+        .value = '';
+
+      hideMessage();
+    }
+
+    function showMessage(
+      message,
+      type
+    ) {
+
+      const element =
+        document.getElementById(
+          'message'
+        );
+
+      element.textContent =
+        message;
+
+      element.className =
+        `message ${type}`;
+    }
+
+    function hideMessage() {
+
+      const element =
+        document.getElementById(
+          'message'
+        );
+
+      element.textContent = '';
+
+      element.className =
+        'message';
+    }
+
+    function showLoginMessage(
+      message,
+      type
+    ) {
+
+      const element =
+        document.getElementById(
+          'loginMessage'
+        );
+
+      element.textContent =
+        message;
+
+      element.className =
+        `message ${type}`;
+    }
+
+    function escapeHtml(value) {
+
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    if (getAdminPassword()) {
+      showPanel();
+      loadLicenses();
+    }
+  </script>
+
+</body>
+</html>
